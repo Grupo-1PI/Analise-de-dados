@@ -25,7 +25,7 @@ PNS_COLUMNS = ['V0001', 'V0024', 'UPA_PNS', 'C008', 'Q084', 'V00291']
 
 
 def capture_censo(refresh: bool) -> None:
-    output_path = RAW_DIR / 'censo_resposta_api.csv'
+    output_path = RAW_DIR / 'censo_bronze.csv'
     if output_path.exists() and not refresh:
         print(f'Reutilizando captura existente: {output_path}')
         return
@@ -63,7 +63,7 @@ def capture_censo(refresh: bool) -> None:
 
 
 def capture_pns(refresh: bool) -> None:
-    output_path = RAW_DIR / 'pns_variaveis_extraidas.csv'
+    output_path = RAW_DIR / 'pns_bronze.csv'
     if output_path.exists() and not refresh:
         print(f'Reutilizando captura existente: {output_path}')
         return
@@ -71,7 +71,7 @@ def capture_pns(refresh: bool) -> None:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='pns_capture_') as temp_dir:
         zip_path = Path(temp_dir) / 'pns_microdados.zip'
-        temp_csv_path = RAW_DIR / 'pns_variaveis_extraidas.tmp.csv'
+        temp_csv_path = RAW_DIR / 'pns_bronze.tmp.csv'
         try:
             with requests.get(
                 PNS_URL,
