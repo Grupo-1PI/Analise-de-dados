@@ -1,0 +1,19 @@
+name: Check PR Source Branch production
+
+on:
+  pull_request:
+    branches:
+      - production
+
+jobs:
+  check-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch source
+        run: |
+          echo "Branch de origem: ${{ github.head_ref }}"
+          if [ "${{ github.head_ref }}" != "homologation" ]; then
+            echo "ERRO: A branch 'production' só aceita merges vindos da 'homologation'."
+            exit 1
+          fi
+          echo "Sucesso: PR vindo da branch correta."
