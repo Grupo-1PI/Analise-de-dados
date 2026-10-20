@@ -1,0 +1,14 @@
+﻿Tabela censo_silver
+regra_campo;tipo;descricao_campo;campo
+Uma linha por faixa etária detalhada, rótulos em minúsculas, sem acentos e com sublinhados.;STRING;Grupo etário detalhado usado para organizar a população, expresso em meses ou anos completos.;faixa_etaria
+Número inteiro maior ou igual a zero.;INT;Quantidade de habitantes do município que pertence à faixa etária indicada.;qtd_amostra
+Usar a sigla da cidade, hífen e sigla do estado. Neste conjunto, SCS-SP.;STRING;Município ao qual todas as contagens da tabela se referem: São Caetano do Sul, SP.;municipio
+
+
+Tabela pns_silver
+regra_campo;tipo;descricao_campo;campo
+Deve conter uma sigla válida de UF brasileira.;STRING;Sigla da unidade da federação onde foi realizada a entrevista.;uf
+Código obrigatório, preservado como texto.;STRING;Código da Unidade Primária de Amostragem (UPA) da PNS, unidade do desenho amostral identificada nos microdados, não se refere a uma Unidade de Pronto Atendimento.;codigo_upa
+Número inteiro maior ou igual a zero, zeros à esquerda são removidos.;INT;Idade do participante em anos, conforme registrada na pesquisa.;idade
+Aceita somente 1 (sim) ou 0 (não), respostas sem valor são excluídas.;INT;Indica se o participante respondeu afirmativamente à pergunta sobre dor crônica.;dor_cronica
+Número inteiro não negativo, arredondado para o inteiro mais próximo.;INT;Peso amostral do participante após arredondamento, que permite ponderar sua representação na população.;peso_amostral_pns

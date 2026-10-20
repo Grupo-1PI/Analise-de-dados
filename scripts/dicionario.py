@@ -5,105 +5,249 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / 'dados'
-DICTIONARY_DIR = DATA_DIR / 'dicionarios'
+OUTPUT_DIR = ROOT / 'dados' / 'dicionarios'
 
-DATASETS = {
-    'censo_bronze': {
-        'camada': 'bronze',
-        'descricao': 'Dados de população por idade capturados da API do Censo 2022.',
-        'granularidade': 'Uma linha por faixa de idade retornada para o município.',
-        'campos': [
-            ('Codigo_idade', 'string', 'Identificador da categoria etária usado pelo IBGE para distinguir cada faixa ou totalização.', 'Código obrigatório e único para cada categoria etária.'),
-            ('Idade', 'string', 'Faixa ou categoria etária associada ao total populacional, como idade em anos ou grupo de idades.', 'Rótulo da classificação do Censo 2022; pode incluir categorias agregadas além das idades detalhadas.'),
-            ('Populacao_2022', 'int', 'Número de habitantes contabilizados na categoria etária para o município em 2022.', 'Número inteiro maior ou igual a zero; pode ficar vazio se não houver valor na fonte.'),
-            ('Codigo_municipio', 'string', 'Código geográfico de sete dígitos que identifica o município na divisão territorial do IBGE.', 'Código IBGE de sete dígitos, mantido como texto para preservar zeros à esquerda.'),
-            ('Municipio', 'string', 'Nome do município ao qual pertencem as contagens populacionais.', 'Deve estar preenchido e corresponder ao código do município.'),
-        ],
-    },
-    'pns_bronze': {
-        'camada': 'bronze',
-        'descricao': 'Variáveis selecionadas dos microdados da Pesquisa Nacional de Saúde 2019.',
-        'granularidade': 'Uma linha por registro individual dos microdados.',
-        'campos': [
-            ('V0001', 'string', 'Código numérico da unidade da federação onde a entrevista foi realizada.', 'Código composto por dois dígitos; na base tratada é convertido para a sigla da UF.'),
-            ('V0024', 'string', 'Identificador do estrato amostral ao qual a observação da pesquisa pertence.', 'Código obrigatório, preservado como texto.'),
-            ('UPA_PNS', 'string', 'Identificador da unidade primária de amostragem (UPA) da entrevista.', 'Código obrigatório, preservado como texto para manter zeros à esquerda.'),
-            ('C008', 'int', 'Idade declarada pelo participante, em anos.', 'Valor numérico inteiro; na base tratada são removidos zeros à esquerda.'),
-            ('Q084', 'string', 'Resposta do participante à pergunta da PNS sobre dor crônica.', 'Aceita 1 (sim), 2 (não) ou vazio; na base tratada vazio é excluído e 2 é recodificado para 0.'),
-            ('V00291', 'dec', 'Peso amostral associado ao participante, usado para representar a população no desenho da pesquisa.', 'Valor numérico decimal não negativo; na base tratada é arredondado para o inteiro mais próximo.'),
-        ],
-    },
-    'censo_silver': {
-        'camada': 'silver',
-        'descricao': 'População do Censo 2022 tratada e organizada por faixa etária.',
-        'granularidade': 'Uma linha por faixa etária de São Caetano do Sul.',
-        'campos': [
-            ('faixa_etaria', 'string', 'Grupo etário detalhado usado para organizar a população, expresso em meses ou anos completos.', 'Uma linha por faixa etária detalhada, rótulos em minúsculas, sem acentos e com sublinhados.'),
-            ('qtd_amostra', 'int', 'Quantidade de habitantes do município que pertence à faixa etária indicada.', 'Número inteiro maior ou igual a zero.'),
-            ('municipio', 'string', 'Município ao qual todas as contagens da tabela se referem: São Caetano do Sul, SP.', 'Usar a sigla da cidade, hífen e sigla do estado. Neste conjunto, SCS-SP.'),
-        ],
-    },
-    'pns_silver': {
-        'camada': 'silver',
-        'descricao': 'Registros da PNS 2019 tratados para análise de dor crônica.',
-        'granularidade': 'Uma linha por pessoa com resposta válida à pergunta de dor crônica.',
-        'campos': [
-            ('uf', 'string', 'Sigla da unidade da federação onde foi realizada a entrevista.', 'Deve conter uma sigla válida de UF brasileira.'),
-            ('codigo_upa', 'string', 'Código da Unidade Primária de Amostragem (UPA) da PNS, unidade do desenho amostral identificada nos microdados; não se refere a uma Unidade de Pronto Atendimento.', 'Código obrigatório, preservado como texto.'),
-            ('idade', 'int', 'Idade do participante em anos, conforme registrada na pesquisa.', 'Número inteiro maior ou igual a zero; zeros à esquerda são removidos.'),
-            ('dor_cronica', 'int', 'Indica se o participante respondeu afirmativamente à pergunta sobre dor crônica.', 'Aceita somente 1 (sim) ou 0 (não); respostas sem valor são excluídas.'),
-            ('peso_amostral_pns', 'int', 'Peso amostral do participante após arredondamento, que permite ponderar sua representação na população.', 'Número inteiro não negativo, arredondado para o inteiro mais próximo.'),
-        ],
-    },
-}
-
-DICTIONARY_COLUMNS = [
-    'regra_campo', 'tipo', 'descricao_campo', 'campo',
-]
-
-
-def write_dictionary(name: str, dataset: dict[str, object]) -> Path:
-    layer = str(dataset['camada'])
-    data_path = DATA_DIR / layer / f'{name}.csv'
-    with data_path.open(encoding='utf-8-sig', newline='') as source:
-        actual_fields = next(csv.reader(source))
-
-    fields = dataset['campos']
-    expected_fields = [field[0] for field in fields]
-    if actual_fields != expected_fields:
-        raise ValueError(
-            f'Esquema inesperado em {data_path}: '
-            f'esperado {expected_fields}, encontrado {actual_fields}.'
-        )
-
-    DICTIONARY_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = DICTIONARY_DIR / f'{name}_dicionario.csv'
-    columns = DICTIONARY_COLUMNS if layer == 'silver' else [
-        column for column in DICTIONARY_COLUMNS if column != 'regra_campo'
-    ]
-    with output_path.open('w', encoding='utf-8-sig', newline='') as output:
-        writer = csv.DictWriter(output, fieldnames=columns, delimiter=';')
-        writer.writeheader()
-        for field_name, field_type, description, rule in fields:
-            row = {
-                'regra_campo': rule if layer == 'silver' else '',
-                'tipo': field_type,
-                'descricao_campo': description,
-                'campo': field_name,
-            }
-            row = {
-                column: value.replace(';', ',') if isinstance(value, str) else value
-                for column, value in row.items()
-            }
-            writer.writerow({column: row[column] for column in columns})
-    return output_path
+# Dados mockados a partir do dicionario aprovado.
+CSV_DATA = {'bronze': [['Tabela censo_bronze'],
+            ['tipo', 'descricao_campo', 'campo'],
+            ['STRING',
+             'Identificador da categoria etária usado pelo IBGE para distinguir cada faixa ou '
+             'totalização.',
+             'Codigo_idade'],
+            ['STRING',
+             'Faixa ou categoria etária associada ao total populacional, como idade em anos ou '
+             'grupo de idades.',
+             'Idade'],
+            ['INT',
+             'Número de habitantes contabilizados na categoria etária para o município em 2022.',
+             'Populacao_2022'],
+            ['STRING',
+             'Código geográfico de sete dígitos que identifica o município na divisão territorial '
+             'do IBGE.',
+             'Codigo_municipio'],
+            ['STRING',
+             'Nome do município ao qual pertencem as contagens populacionais.',
+             'Municipio'],
+            [''],
+            [],
+            [],
+            ['Tabela pns_bronze'],
+            ['tipo', 'descricao_campo', 'campo'],
+            ['STRING',
+             'Código numérico da unidade da federação onde a entrevista foi realizada.',
+             'V0001'],
+            ['STRING',
+             'Identificador do estrato amostral ao qual a observação da pesquisa pertence.',
+             'V0024'],
+            ['STRING',
+             'Identificador da unidade primária de amostragem (UPA) da entrevista.',
+             'UPA_PNS'],
+            ['INT', 'Idade declarada pelo participante, em anos.', 'C008'],
+            ['STRING', 'Resposta do participante à pergunta da PNS sobre dor crônica.', 'Q084'],
+            ['DEC',
+             'Peso amostral associado ao participante, usado para representar a população no '
+             'desenho da pesquisa.',
+             'V00291']],
+ 'silver': [['Tabela censo_silver'],
+            ['regra_campo', 'tipo', 'descricao_campo', 'campo'],
+            ['Uma linha por faixa etária detalhada, rótulos em minúsculas, sem acentos e com '
+             'sublinhados.',
+             'STRING',
+             'Grupo etário detalhado usado para organizar a população, expresso em meses ou anos '
+             'completos.',
+             'faixa_etaria'],
+            ['Número inteiro maior ou igual a zero.',
+             'INT',
+             'Quantidade de habitantes do município que pertence à faixa etária indicada.',
+             'qtd_amostra'],
+            ['Usar a sigla da cidade, hífen e sigla do estado. Neste conjunto, SCS-SP.',
+             'STRING',
+             'Município ao qual todas as contagens da tabela se referem: São Caetano do Sul, SP.',
+             'municipio'],
+            [],
+            [],
+            ['Tabela pns_silver'],
+            ['regra_campo', 'tipo', 'descricao_campo', 'campo'],
+            ['Deve conter uma sigla válida de UF brasileira.',
+             'STRING',
+             'Sigla da unidade da federação onde foi realizada a entrevista.',
+             'uf'],
+            ['Código obrigatório, preservado como texto.',
+             'STRING',
+             'Código da Unidade Primária de Amostragem (UPA) da PNS, unidade do desenho amostral '
+             'identificada nos microdados, não se refere a uma Unidade de Pronto Atendimento.',
+             'codigo_upa'],
+            ['Número inteiro maior ou igual a zero, zeros à esquerda são removidos.',
+             'INT',
+             'Idade do participante em anos, conforme registrada na pesquisa.',
+             'idade'],
+            ['Aceita somente 1 (sim) ou 0 (não), respostas sem valor são excluídas.',
+             'INT',
+             'Indica se o participante respondeu afirmativamente à pergunta sobre dor crônica.',
+             'dor_cronica'],
+            ['Número inteiro não negativo, arredondado para o inteiro mais próximo.',
+             'INT',
+             'Peso amostral do participante após arredondamento, que permite ponderar sua '
+             'representação na população.',
+             'peso_amostral_pns']],
+ 'sistema': [['Tabela cargo'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['VARCHAR(45)', 'Nome do cargo do funcionario.', 'nome'],
+             ['VARCHAR(255)', 'Descricao do cargo ou item.', 'descricao'],
+             [],
+             [],
+             ['Tabela endereco'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['VARCHAR(9)', 'Codigo postal do endereco.', 'cep'],
+             ['VARCHAR(120)', 'Rua, avenida ou via do endereco.', 'logradouro'],
+             ['VARCHAR(80)', 'Bairro do endereco.', 'bairro'],
+             ['VARCHAR(80)', 'Cidade do endereco.', 'cidade'],
+             ['VARCHAR(2)', 'Sigla da unidade federativa.', 'uf'],
+             ['VARCHAR(10)', 'Numero do endereco.', 'numero'],
+             ['VARCHAR(60)', 'Complemento do endereco, quando informado.', 'complemento'],
+             [],
+             [],
+             ['Tabela usuario'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['VARCHAR(120)', 'Nome do registro.', 'nome'],
+             ['VARCHAR(20)', 'Telefone de contato do usuario.', 'telefone'],
+             ['VARCHAR(120)', 'Endereco de e-mail do usuario.', 'email'],
+             ['VARCHAR(255)', 'Hash da senha de autenticacao.', 'senha'],
+             ['DATE', 'Data de nascimento do usuario.', 'data_nascimento'],
+             ['TINYINT(1)', 'Indica se o usuario esta ativo (1=sim, 0=nao).', 'ativo'],
+             ['INT', 'Chave estrangeira que referencia a tabela endereco.', 'fkEndereco'],
+             [],
+             [],
+             ['Tabela funcionario'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['INT', 'Chave estrangeira que referencia a tabela usuario.', 'fkUsuario'],
+             ['INT', 'Chave estrangeira que referencia a tabela cargo.', 'fkCargo'],
+             [],
+             [],
+             ['Tabela agenda_excecao'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['INT', 'Chave estrangeira que referencia a tabela funcionario.', 'fkFuncionario'],
+             ['DATE', 'Data da excecao na agenda.', 'data'],
+             ['TIME', 'Horario de inicio da disponibilidade ou excecao.', 'hora_inicio'],
+             ['TIME', 'Horario de termino da disponibilidade ou excecao.', 'hora_fim'],
+             ['TINYINT(1)',
+              'Indica se o funcionario esta disponivel no periodo (1=sim, 0=nao).',
+              'disponivel'],
+             [],
+             [],
+             ['Tabela agenda_funcionario'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['INT', 'Chave estrangeira que referencia a tabela funcionario.', 'fkFuncionario'],
+             ['INT', 'Dia da semana (MySQL DAYOFWEEK: 1=domingo a 7=sabado).', 'dia_semana'],
+             ['TIME', 'Horario de inicio da disponibilidade ou excecao.', 'hora_inicio'],
+             ['TIME', 'Horario de termino da disponibilidade ou excecao.', 'hora_fim'],
+             [],
+             [],
+             ['Tabela cliente'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['INT', 'Chave estrangeira que referencia a tabela usuario.', 'fkUsuario'],
+             ['VARCHAR(255)', 'Observacoes adicionais relacionadas ao registro.', 'observacao'],
+             [],
+             [],
+             ['Tabela sala'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['VARCHAR(255)', 'Descricao do cargo ou item.', 'descricao'],
+             [],
+             [],
+             ['Tabela status'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['VARCHAR(45)', 'Nome do status do agendamento.', 'nome'],
+             [],
+             [],
+             ['Tabela agendamento'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['DATETIME', 'Data e hora de inicio do agendamento.', 'data_hora_inicio'],
+             ['DATETIME', 'Data e hora de termino do agendamento.', 'data_hora_fim'],
+             ['VARCHAR(255)', 'Observacoes adicionais relacionadas ao registro.', 'observacao'],
+             ['INT', 'Chave estrangeira que referencia a tabela cliente.', 'fkCliente'],
+             ['INT', 'Chave estrangeira que referencia a tabela sala.', 'fkSala'],
+             ['INT', 'Chave estrangeira que referencia a tabela status.', 'fkStatus'],
+             [],
+             [],
+             ['Tabela funcionario_agendamento'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Chave estrangeira que referencia a tabela funcionario.', 'fkFuncionario'],
+             ['INT', 'Chave estrangeira que referencia a tabela agendamento.', 'fkAgendamento'],
+             [],
+             [],
+             ['Tabela servico'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['VARCHAR(100)', 'Nome do servico oferecido.', 'nome'],
+             ['DECIMAL(10,2)', 'Preco atual do servico.', 'valor'],
+             ['VARCHAR(255)', 'Descricao do cargo ou item.', 'descricao'],
+             ['INT', 'Duracao media estimada do servico, em minutos.', 'tempoMedio'],
+             [],
+             [],
+             ['Tabela atendimento_servico'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['DECIMAL(10,2)', 'Valor cobrado pelo servico neste atendimento.', 'valor_unitario'],
+             ['INT', 'Chave estrangeira que referencia a tabela servico.', 'fkServico'],
+             ['INT', 'Chave estrangeira que referencia a tabela agendamento.', 'fkAgendamento'],
+             ['VARCHAR(255)', 'Descricao do servico realizado no atendimento.', 'descricao'],
+             ['VARCHAR(255)', 'Observacoes adicionais do atendimento.', 'observacoes'],
+             [],
+             [],
+             ['Tabela especialidade'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['VARCHAR(60)', 'Nome da especialidade oferecida.', 'nome'],
+             [],
+             [],
+             ['Tabela especialidade_servico'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Chave estrangeira que referencia a tabela especialidade.', 'fkEspecialidade'],
+             ['INT', 'Chave estrangeira que referencia a tabela servico.', 'fkServico'],
+             [],
+             [],
+             ['Tabela funcionario_especialidade'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Chave estrangeira que referencia a tabela funcionario.', 'fkFuncionario'],
+             ['INT', 'Chave estrangeira que referencia a tabela especialidade.', 'fkEspecialidade'],
+             [],
+             [],
+             ['Tabela permissoes'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Identificador unico do registro.', 'id'],
+             ['VARCHAR(45)', 'Nome do registro.', 'nome'],
+             ['VARCHAR(255)', 'Descricao do cargo ou item.', 'descricao'],
+             [],
+             [],
+             ['Tabela permissoes_cargo'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Chave estrangeira que referencia a tabela permissoes.', 'fkPermissoes'],
+             ['INT', 'Chave estrangeira que referencia a tabela cargo.', 'fkCargo'],
+             [],
+             [],
+             ['Tabela sala_servico'],
+             ['tipo', 'descricao_campo', 'campo'],
+             ['INT', 'Chave estrangeira que referencia a tabela sala.', 'fkSala'],
+             ['INT', 'Chave estrangeira que referencia a tabela servico.', 'fkServico']]}
 
 
 def main() -> None:
-    for name, dataset in DATASETS.items():
-        output_path = write_dictionary(name, dataset)
-        print(f'Dicionário salvo: {output_path}')
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    for name, rows in CSV_DATA.items():
+        output_path = OUTPUT_DIR / f'{name}.csv'
+        with output_path.open('w', encoding='utf-8-sig', newline='') as output:
+            csv.writer(output, delimiter=';').writerows(rows)
+        print(f'CSV salvo: {output_path}')
 
 
 if __name__ == '__main__':

@@ -1,0 +1,147 @@
+﻿Tabela cargo
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+VARCHAR(45);Nome do cargo do funcionario.;nome
+VARCHAR(255);Descricao do cargo ou item.;descricao
+
+
+Tabela endereco
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+VARCHAR(9);Codigo postal do endereco.;cep
+VARCHAR(120);Rua, avenida ou via do endereco.;logradouro
+VARCHAR(80);Bairro do endereco.;bairro
+VARCHAR(80);Cidade do endereco.;cidade
+VARCHAR(2);Sigla da unidade federativa.;uf
+VARCHAR(10);Numero do endereco.;numero
+VARCHAR(60);Complemento do endereco, quando informado.;complemento
+
+
+Tabela usuario
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+VARCHAR(120);Nome do registro.;nome
+VARCHAR(20);Telefone de contato do usuario.;telefone
+VARCHAR(120);Endereco de e-mail do usuario.;email
+VARCHAR(255);Hash da senha de autenticacao.;senha
+DATE;Data de nascimento do usuario.;data_nascimento
+TINYINT(1);Indica se o usuario esta ativo (1=sim, 0=nao).;ativo
+INT;Chave estrangeira que referencia a tabela endereco.;fkEndereco
+
+
+Tabela funcionario
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+INT;Chave estrangeira que referencia a tabela usuario.;fkUsuario
+INT;Chave estrangeira que referencia a tabela cargo.;fkCargo
+
+
+Tabela agenda_excecao
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+INT;Chave estrangeira que referencia a tabela funcionario.;fkFuncionario
+DATE;Data da excecao na agenda.;data
+TIME;Horario de inicio da disponibilidade ou excecao.;hora_inicio
+TIME;Horario de termino da disponibilidade ou excecao.;hora_fim
+TINYINT(1);Indica se o funcionario esta disponivel no periodo (1=sim, 0=nao).;disponivel
+
+
+Tabela agenda_funcionario
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+INT;Chave estrangeira que referencia a tabela funcionario.;fkFuncionario
+INT;Dia da semana (MySQL DAYOFWEEK: 1=domingo a 7=sabado).;dia_semana
+TIME;Horario de inicio da disponibilidade ou excecao.;hora_inicio
+TIME;Horario de termino da disponibilidade ou excecao.;hora_fim
+
+
+Tabela cliente
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+INT;Chave estrangeira que referencia a tabela usuario.;fkUsuario
+VARCHAR(255);Observacoes adicionais relacionadas ao registro.;observacao
+
+
+Tabela sala
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+VARCHAR(255);Descricao do cargo ou item.;descricao
+
+
+Tabela status
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+VARCHAR(45);Nome do status do agendamento.;nome
+
+
+Tabela agendamento
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+DATETIME;Data e hora de inicio do agendamento.;data_hora_inicio
+DATETIME;Data e hora de termino do agendamento.;data_hora_fim
+VARCHAR(255);Observacoes adicionais relacionadas ao registro.;observacao
+INT;Chave estrangeira que referencia a tabela cliente.;fkCliente
+INT;Chave estrangeira que referencia a tabela sala.;fkSala
+INT;Chave estrangeira que referencia a tabela status.;fkStatus
+
+
+Tabela funcionario_agendamento
+tipo;descricao_campo;campo
+INT;Chave estrangeira que referencia a tabela funcionario.;fkFuncionario
+INT;Chave estrangeira que referencia a tabela agendamento.;fkAgendamento
+
+
+Tabela servico
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+VARCHAR(100);Nome do servico oferecido.;nome
+DECIMAL(10,2);Preco atual do servico.;valor
+VARCHAR(255);Descricao do cargo ou item.;descricao
+INT;Duracao media estimada do servico, em minutos.;tempoMedio
+
+
+Tabela atendimento_servico
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+DECIMAL(10,2);Valor cobrado pelo servico neste atendimento.;valor_unitario
+INT;Chave estrangeira que referencia a tabela servico.;fkServico
+INT;Chave estrangeira que referencia a tabela agendamento.;fkAgendamento
+VARCHAR(255);Descricao do servico realizado no atendimento.;descricao
+VARCHAR(255);Observacoes adicionais do atendimento.;observacoes
+
+
+Tabela especialidade
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+VARCHAR(60);Nome da especialidade oferecida.;nome
+
+
+Tabela especialidade_servico
+tipo;descricao_campo;campo
+INT;Chave estrangeira que referencia a tabela especialidade.;fkEspecialidade
+INT;Chave estrangeira que referencia a tabela servico.;fkServico
+
+
+Tabela funcionario_especialidade
+tipo;descricao_campo;campo
+INT;Chave estrangeira que referencia a tabela funcionario.;fkFuncionario
+INT;Chave estrangeira que referencia a tabela especialidade.;fkEspecialidade
+
+
+Tabela permissoes
+tipo;descricao_campo;campo
+INT;Identificador unico do registro.;id
+VARCHAR(45);Nome do registro.;nome
+VARCHAR(255);Descricao do cargo ou item.;descricao
+
+
+Tabela permissoes_cargo
+tipo;descricao_campo;campo
+INT;Chave estrangeira que referencia a tabela permissoes.;fkPermissoes
+INT;Chave estrangeira que referencia a tabela cargo.;fkCargo
+
+
+Tabela sala_servico
+tipo;descricao_campo;campo
+INT;Chave estrangeira que referencia a tabela sala.;fkSala
+INT;Chave estrangeira que referencia a tabela servico.;fkServico
