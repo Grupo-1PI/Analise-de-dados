@@ -1,0 +1,18 @@
+﻿Tabela censo_bronze
+tipo;descricao_campo;campo
+STRING;Identificador da categoria etária usado pelo IBGE para distinguir cada faixa ou totalização.;Codigo_idade
+STRING;Faixa ou categoria etária associada ao total populacional, como idade em anos ou grupo de idades.;Idade
+INT;Número de habitantes contabilizados na categoria etária para o município em 2022.;Populacao_2022
+STRING;Código geográfico de sete dígitos que identifica o município na divisão territorial do IBGE.;Codigo_municipio
+STRING;Nome do município ao qual pertencem as contagens populacionais.;Municipio
+""
+
+
+Tabela pns_bronze
+tipo;descricao_campo;campo
+STRING;Código numérico da unidade da federação onde a entrevista foi realizada.;V0001
+STRING;Identificador do estrato amostral ao qual a observação da pesquisa pertence.;V0024
+STRING;Identificador da unidade primária de amostragem (UPA) da entrevista.;UPA_PNS
+INT;Idade declarada pelo participante, em anos.;C008
+STRING;Resposta do participante à pergunta da PNS sobre dor crônica.;Q084
+DEC;Peso amostral associado ao participante, usado para representar a população no desenho da pesquisa.;V00291
