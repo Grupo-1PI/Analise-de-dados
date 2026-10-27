@@ -145,3 +145,21 @@ Tabela sala_servico
 tipo;descricao_campo;campo
 INT;Chave estrangeira que referencia a tabela sala.;fkSala
 INT;Chave estrangeira que referencia a tabela servico.;fkServico
+
+
+Tabela triagem_pergunta
+tipo;descricao_campo;campo
+INT;Identificador unico da pergunta de triagem.;id
+VARCHAR(500);Texto apresentado como pergunta durante a triagem.;texto
+INT;Ordem de exibicao da pergunta.;ordem
+TINYINT(1);Indica se a pergunta e uma pergunta raiz (1=sim, 0=nao).;raiz
+INT;Chave estrangeira opcional que referencia a tabela especialidade.;fk_especialidade
+
+
+Tabela triagem_resposta
+tipo;descricao_campo;campo
+INT;Identificador unico da resposta de triagem.;id
+INT;Chave estrangeira que referencia a pergunta de triagem.;fk_pergunta
+ENUM('SIM','NAO');Resposta possivel para a pergunta de triagem.;resposta
+INT;Chave estrangeira opcional que referencia a proxima pergunta.;fk_proxima_pergunta
+INT;Chave estrangeira opcional que referencia a tabela especialidade.;fk_especialidade
