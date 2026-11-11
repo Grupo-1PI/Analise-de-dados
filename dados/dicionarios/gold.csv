@@ -1,0 +1,6 @@
+﻿Tabela censo-pns_gold
+tipo;descricao_campo;campo
+STRING;Faixa etária de referência do indicador.;faixa_etaria
+INT;População residente em São Caetano do Sul na faixa etária.;populacao_sao_caetano
+DECIMAL;Prevalência ponderada observada para São Paulo na faixa etária.;prevalencia_dor_cronica_sp_pct
+INT;Estimativa de pessoas com dor em São Caetano pela prevalência de SP.;estimativa_pessoas_com_dor

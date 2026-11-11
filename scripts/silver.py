@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import pandas as pd
@@ -42,12 +42,12 @@ UF_CODES = {
 }
 
 
-def round_weight(value: str) -> str:
+def normalize_weight(value: str) -> str:
     value = value.strip()
     if not value:
         return ''
     try:
-        return str(Decimal(value).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+        return format(Decimal(value), 'f')
     except InvalidOperation as error:
         raise ValueError(f'Peso amostral inválido: {value!r}') from error
 
@@ -121,7 +121,7 @@ def transform_pns() -> Path:
     pns['dor_cronica'] = pns['dor_cronica'].map({'1': '1', '2': '0'})
 
     pns['idade'] = pns['idade'].str.strip().str.replace(r'^0+(?=\d)', '', regex=True)
-    pns['peso_amostral_pns'] = pns['peso_amostral_pns'].map(round_weight)
+    pns['peso_amostral_pns'] = pns['peso_amostral_pns'].map(normalize_weight)
     pns = pns[['uf', 'codigo_upa', 'idade', 'dor_cronica', 'peso_amostral_pns']]
     pns.to_csv(output_path, index=False, encoding='utf-8-sig')
     return output_path
