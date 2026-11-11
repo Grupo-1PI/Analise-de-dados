@@ -11,4 +11,4 @@ Deve conter uma sigla válida de UF brasileira.;STRING;Sigla da unidade da feder
 Código obrigatório, preservado como texto.;STRING;Código da Unidade Primária de Amostragem (UPA) da PNS, unidade do desenho amostral identificada nos microdados, não se refere a uma Unidade de Pronto Atendimento.;codigo_upa
 Número inteiro maior ou igual a zero, zeros à esquerda são removidos.;INT;Idade do participante em anos, conforme registrada na pesquisa.;idade
 Aceita somente 1 (sim) ou 0 (não), respostas sem valor são excluídas.;INT;Indica se o participante respondeu afirmativamente à pergunta sobre dor crônica.;dor_cronica
-Número inteiro não negativo, arredondado para o inteiro mais próximo.;INT;Peso amostral do participante após arredondamento, que permite ponderar sua representação na população.;peso_amostral_pns
+Número decimal positivo, preserva a precisão original dos microdados.;DECIMAL;Peso amostral do participante, usado para ponderar sua representação na população.;peso_amostral_pns
